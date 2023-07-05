@@ -1,0 +1,12 @@
+
+news.ycombinator.com##html:style(filter:invert(100%) hue-rotate(180deg))
+news.ycombinator.com##body:style(background: white)
+news.ycombinator.com##div.toptext:style(color: black)
+news.ycombinator.com###hnmain td[bgcolor="#000000"]
+
+
+*$removeparam=utm_source
+*$removeparam=utm_medium
+*$removeparam=utm_campaign
+*$removeparam=utm_content
+
