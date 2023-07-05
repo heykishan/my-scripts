@@ -10,3 +10,4 @@ news.ycombinator.com###hnmain td[bgcolor="#000000"]
 *$removeparam=utm_campaign
 *$removeparam=utm_content
 
+//source https://letsblock.it/filters/
