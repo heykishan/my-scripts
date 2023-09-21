@@ -4,6 +4,9 @@ news.ycombinator.com##body:style(background: white)
 news.ycombinator.com##div.toptext:style(color: black)
 news.ycombinator.com###hnmain td[bgcolor="#000000"]
 
+//hide login with Google popups
+accounts.google.com/gsi/iframe
+
 
 *$removeparam=utm_source
 *$removeparam=utm_medium
