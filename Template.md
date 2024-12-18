@@ -1,15 +1,19 @@
-### Tasks
-
-##### Tech:
+### Focus
+- [ ] 
+- [ ] 
 - [ ] 
 
-##### Learning:
-- [ ] 
+### Today's Tasks
+- [ ] Task description #admin
+- [ ] Technical implementation #tech
+- [ ] Read about X #learning
 
-##### Admin:
-- [ ] 
+### End of Day
+- Completed:
+  - 
 
-##### Scrum notes:
-- [ ] 
-### Notes
+- Learnings:
+  - 
 
+- Tomorrow's context:
+  - 
