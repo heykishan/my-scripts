@@ -3,10 +3,8 @@
 - [ ] 
 - [ ] 
 
-### Today's Tasks
-- [ ] Task description #admin
-- [ ] Technical implementation #tech
-- [ ] Read about X #learning
+### Other Tasks
+- [ ] 
 
 ### End of Day
 - Completed:
