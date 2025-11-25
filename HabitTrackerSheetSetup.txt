@@ -1,0 +1,178 @@
+/**
+ * --------------------------------------------------------------------------
+ * MASTER HABIT TRACKER SCRIPT (v5)
+ * Features: 
+ * - Clean Headers (No Emojis)
+ * - 5 Habits (Water, News, Book, Gym, GMAT)
+ * - Custom Date Format (Nov-25-25)
+ * - Full Month Names in Analytics (November)
+ * - 6 AM Auto-Update Trigger
+ * --------------------------------------------------------------------------
+ */
+
+// 1. MENU CREATION (Runs automatically when you open the sheet)
+// Replace the existing onOpen function with this one:
+function onOpen() {
+  try {
+    const ui = SpreadsheetApp.getUi();
+    ui.createMenu('Habit Tracker')
+      .addItem('1. Reset & Setup Tracker', 'setupTracker')
+      .addItem('2. Turn on 6AM Auto-Add', 'setDailyTrigger')
+      .addToUi();
+  } catch (e) {
+    console.log("Could not create menu. (This happens if run manually from editor).");
+  }
+}
+
+// 2. SETUP FUNCTION (Run this to build/reset the sheet)
+function setupTracker() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // --- SHEET 1: TRACKER ---
+  let trackSheet = ss.getSheetByName("Tracker");
+  if (!trackSheet) {
+    trackSheet = ss.insertSheet("Tracker");
+  } else {
+    trackSheet.clear(); 
+  }
+
+  // Headers
+  const headers = [
+    ["Date", "4L Water", "News", "15m Book", "Gym", "GMAT", "Daily Success", "WeekID", "Gratitude Journal"]
+  ];
+
+  trackSheet.getRange("A1:I1").setValues(headers)
+    .setFontWeight("bold")
+    .setBackground("#202124")
+    .setFontColor("#ffffff")
+    .setHorizontalAlignment("center");
+
+  trackSheet.setFrozenRows(1);
+  
+  // Column Widths
+  trackSheet.setColumnWidth(1, 100); // Date
+  trackSheet.setColumnWidth(2, 80);  
+  trackSheet.setColumnWidth(3, 80);
+  trackSheet.setColumnWidth(4, 80);
+  trackSheet.setColumnWidth(5, 80);
+  trackSheet.setColumnWidth(6, 80);  // GMAT
+  trackSheet.setColumnWidth(7, 100); // Success %
+  trackSheet.setColumnWidth(8, 50);  // WeekID
+  trackSheet.setColumnWidth(9, 400); // Journal
+
+  // Checkboxes & Date Format
+  trackSheet.getRange("B2:F1000").insertCheckboxes().setHorizontalAlignment("center");
+  
+  const dateRule = SpreadsheetApp.newDataValidation().requireDate().build();
+  trackSheet.getRange("A2:A1000")
+    .setDataValidation(dateRule)
+    .setNumberFormat("mmm-dd-yy"); // Format: Nov-25-25
+
+  // Helper Formulas
+  // Col G: Daily % (Averages 5 items: B, C, D, E, F)
+  trackSheet.getRange("G2").setFormula('=ARRAYFORMULA(IF(A2:A="",, (N(B2:B)+N(C2:C)+N(D2:D)+N(E2:E)+N(F2:F))/5))')
+    .setNumberFormat("0%");
+
+  // Col H: Week ID (Hidden Helper)
+  trackSheet.getRange("H2").setFormula('=ARRAYFORMULA(IF(A2:A="",, YEAR(A2:A) & "-W" & TEXT(ISOWEEKNUM(A2:A),"00")))');
+  trackSheet.hideColumns(8); 
+
+  // Journal Wrapping
+  trackSheet.getRange("I2:I1000").setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP).setVerticalAlignment("top");
+
+  // Conditional Formatting (Green row if Success = 100%)
+  const range = trackSheet.getRange("A2:I1000");
+  const rule = SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied("=$G2=1")
+    .setBackground("#e6f4ea")
+    .setRanges([range])
+    .build();
+  trackSheet.setConditionalFormatRules([rule]);
+
+
+  // --- SHEET 2: ANALYTICS ---
+  let statsSheet = ss.getSheetByName("Analytics");
+  if (!statsSheet) {
+    statsSheet = ss.insertSheet("Analytics");
+  } else {
+    statsSheet.clear();
+  }
+  statsSheet.getRange("A1:A20").setFontFamily("Google Sans");
+
+  // Weekly Stats
+  statsSheet.getRange("A1").setValue("Weekly Performance").setFontSize(14).setFontWeight("bold");
+
+  const queryWeekly = `=QUERY({Tracker!A2:A, ARRAYFORMULA(N(Tracker!B2:F)), Tracker!G2:H}, 
+  "SELECT Col8, Avg(Col2), Avg(Col3), Avg(Col4), Avg(Col5), Avg(Col6), Avg(Col7) 
+   WHERE Col1 IS NOT NULL 
+   GROUP BY Col8 
+   LABEL Col8 'Week', Avg(Col2) 'Water', Avg(Col3) 'News', Avg(Col4) 'Book', Avg(Col5) 'Gym', Avg(Col6) 'GMAT', Avg(Col7) 'Overall' 
+   FORMAT Avg(Col2) '0%', Avg(Col3) '0%', Avg(Col4) '0%', Avg(Col5) '0%', Avg(Col6) '0%', Avg(Col7) '0%'", 0)`;
+  
+  statsSheet.getRange("A3").setFormula(queryWeekly);
+  statsSheet.getRange("A3:G3").setBackground("#4285f4").setFontColor("white").setFontWeight("bold");
+
+  // Monthly Stats
+  statsSheet.getRange("A15").setValue("Monthly Performance").setFontSize(14).setFontWeight("bold");
+  
+  const queryMonthly = `=QUERY({Tracker!A2:A, ARRAYFORMULA(N(Tracker!B2:F)), Tracker!G2:H, ARRAYFORMULA(EOMONTH(Tracker!A2:A, -1)+1)}, 
+  "SELECT Col9, Avg(Col2), Avg(Col3), Avg(Col4), Avg(Col5), Avg(Col6), Avg(Col7) 
+   WHERE Col1 IS NOT NULL 
+   GROUP BY Col9 
+   LABEL Col9 'Month', Avg(Col2) 'Water', Avg(Col3) 'News', Avg(Col4) 'Book', Avg(Col5) 'Gym', Avg(Col6) 'GMAT', Avg(Col7) 'Overall' 
+   FORMAT Col9 'MMMM', Avg(Col2) '0%', Avg(Col3) '0%', Avg(Col4) '0%', Avg(Col5) '0%', Avg(Col6) '0%', Avg(Col7) '0%'", 0)`;
+  
+  statsSheet.getRange("A17").setFormula(queryMonthly);
+  statsSheet.getRange("A17:G17").setBackground("#0f9d58").setFontColor("white").setFontWeight("bold");
+
+  // Add today's date to start
+  const today = new Date();
+  trackSheet.getRange("A2").setValue(today);
+}
+
+// 3. WORKER FUNCTION (The logic to add a new row)
+function addDailyRow() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Tracker");
+  if (!sheet) return;
+
+  const lastRow = sheet.getLastRow();
+  let lastDateValue = new Date(0); 
+  if (lastRow > 1) {
+     lastDateValue = sheet.getRange(lastRow, 1).getValue();
+  }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const lastDate = new Date(lastDateValue);
+  lastDate.setHours(0, 0, 0, 0);
+
+  if (lastDate < today) {
+    const newRow = lastRow + 1;
+    sheet.getRange(newRow, 1).setValue(today);
+    // Add Checkboxes for columns B-F (5 cols)
+    sheet.getRange(newRow, 2, 1, 5).insertCheckboxes().setHorizontalAlignment("center");
+    console.log("New row added for: " + today);
+  } else {
+    console.log("Row already exists for today.");
+  }
+}
+
+// 4. TRIGGER SETUP (Run this once to enable 6AM updates)
+function setDailyTrigger() {
+  const triggers = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'addDailyRow') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  
+  ScriptApp.newTrigger('addDailyRow')
+    .timeBased()
+    .everyDays(1)
+    .atHour(6) // 6 AM - 7 AM window
+    .create();
+    
+  Browser.msgBox("Automation Enabled! A new row will be added every day at 6 AM.");
+}
